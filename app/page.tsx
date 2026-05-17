@@ -15,6 +15,16 @@ const PRESETS = [
   "영화리뷰 스타일",
 ];
 
+const LENGTHS = ["30초", "45초", "60초"];
+
+const TONES = [
+  "담백한 말투",
+  "친구한테 말하는 느낌",
+  "전문가 느낌",
+  "웃긴 말투",
+  "스토리텔링 느낌",
+];
+
 type HistoryItem = {
   id: string;
   topic: string;
@@ -22,6 +32,8 @@ type HistoryItem = {
   platform: string;
   style: string;
   preset: string;
+  length: string;
+  tone: string;
   result: string;
   createdAt: string;
 };
@@ -55,10 +67,15 @@ export default function HomePage() {
   const [style, setStyle] = useState("자극형");
   const [category, setCategory] = useState("돈/부업");
   const [preset, setPreset] = useState("기본 조회수 코치");
+  const [length, setLength] = useState("45초");
+  const [tone, setTone] = useState("친구한테 말하는 느낌");
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+
   const [showAdModal, setShowAdModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
+
   const [usageCount, setUsageCount] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -106,11 +123,14 @@ export default function HomePage() {
       platform,
       style,
       preset,
+      length,
+      tone,
       result: newResult,
       createdAt: new Date().toLocaleString("ko-KR"),
     };
 
     const next = [item, ...history].slice(0, 5);
+
     setHistory(next);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   }
@@ -121,18 +141,26 @@ export default function HomePage() {
     setPlatform(item.platform);
     setStyle(item.style);
     setPreset(item.preset || "기본 조회수 코치");
+    setLength(item.length || "45초");
+    setTone(item.tone || "친구한테 말하는 느낌");
     setResult(item.result);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function clearHistory() {
     if (!confirm("최근 생성 기록을 모두 삭제할까요?")) return;
+
     setHistory([]);
     localStorage.removeItem(HISTORY_KEY);
   }
 
   async function handleGenerateClick() {
     const current = getUsageCount();
+
     setUsageCount(current);
 
     if (current >= FREE_LIMIT) {
@@ -169,6 +197,8 @@ export default function HomePage() {
           style,
           category,
           preset,
+          length,
+          tone,
         }),
       });
 
@@ -179,7 +209,9 @@ export default function HomePage() {
       }
 
       setResult(data.result);
+
       increaseUsage();
+
       saveHistory(data.result);
     } catch {
       alert("AI 생성 중 오류가 발생했습니다.");
@@ -190,13 +222,19 @@ export default function HomePage() {
 
   async function copyText(text: string) {
     if (!text) return;
+
     await navigator.clipboard.writeText(text);
+
     alert("복사되었습니다.");
   }
 
   async function shareSite() {
     const url = window.location.href;
-    const shareText = `🔥 ShortsFlow\nAI가 쇼츠 제목, 썸네일 문구, 해시태그, 장면 대본까지 만들어주는 무료 툴\n\n${url}`;
+
+    const shareText = `🔥 ShortsFlow
+AI가 쇼츠 제목, 썸네일, 해시태그, 장면 대본까지 만들어주는 무료 툴
+
+${url}`;
 
     if (navigator.share) {
       await navigator.share({
@@ -204,16 +242,28 @@ export default function HomePage() {
         text: shareText,
         url,
       });
+
       return;
     }
 
     await navigator.clipboard.writeText(shareText);
-    alert("공유 문구와 링크가 복사되었습니다.");
+
+    alert("공유 링크가 복사되었습니다.");
   }
 
   async function shareResult() {
     const url = window.location.href;
-    const shareText = `🔥 ShortsFlow로 만든 쇼츠 아이디어\n\n주제: ${topic}\n프리셋: ${preset}\n바이럴 점수: ${parsed.score}/100\n\n${parsed.titles || ""}\n\n${url}`;
+
+    const shareText = `🔥 ShortsFlow 결과
+
+주제: ${topic}
+길이: ${length}
+톤: ${tone}
+프리셋: ${preset}
+
+${parsed.titles || ""}
+
+${url}`;
 
     if (navigator.share) {
       await navigator.share({
@@ -221,11 +271,13 @@ export default function HomePage() {
         text: shareText,
         url,
       });
+
       return;
     }
 
     await navigator.clipboard.writeText(shareText);
-    alert("공유용 결과가 복사되었습니다.");
+
+    alert("공유 결과가 복사되었습니다.");
   }
 
   return (
@@ -235,6 +287,7 @@ export default function HomePage() {
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-600">
             🔥
           </span>
+
           ShortsFlow
         </div>
 
@@ -272,14 +325,13 @@ export default function HomePage() {
           </h1>
 
           <p className="mb-6 text-sm leading-7 text-white/70 sm:mb-8 sm:text-base">
-            주제만 입력하면 AI가 제목, 썸네일 문구, 해시태그, 후킹 분석,
-            CapCut/Vrew용 장면 대본까지 한 번에 설계합니다.
+            실제 쇼츠 크리에이터 느낌의 대본을 AI가 자동으로 만들어줍니다.
           </p>
 
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="예: 돈 빨리 모으는 법 / 3분 책요약 / 유머 밈 / 제품 리뷰"
+            placeholder="예: 돈 빨리 모으는 법 / 연애 심리 / 영화 리뷰 / 밈"
             className="mb-4 h-32 w-full resize-none rounded-3xl bg-white p-5 text-sm text-black outline-none sm:h-36 sm:text-base"
           />
 
@@ -317,8 +369,51 @@ export default function HomePage() {
               <option>책요약</option>
               <option>유머/밈</option>
               <option>제품 리뷰</option>
-              <option>공포/스토리</option>
             </select>
+          </div>
+
+          <div className="mb-5 rounded-3xl bg-black/20 p-4">
+            <div className="mb-3 text-sm font-black text-white/80">
+              대본 길이
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {LENGTHS.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setLength(item)}
+                  className={
+                    length === item
+                      ? "rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-black text-black"
+                      : "rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white hover:bg-white/20"
+                  }
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-5 rounded-3xl bg-black/20 p-4">
+            <div className="mb-3 text-sm font-black text-white/80">
+              대본 톤
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              {TONES.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setTone(item)}
+                  className={
+                    tone === item
+                      ? "shrink-0 rounded-full bg-yellow-400 px-4 py-3 text-xs font-black text-black sm:text-sm"
+                      : "shrink-0 rounded-full bg-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/20 sm:text-sm"
+                  }
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mb-5 rounded-3xl bg-black/20 p-4">
@@ -333,8 +428,8 @@ export default function HomePage() {
                   onClick={() => setPreset(item)}
                   className={
                     preset === item
-                      ? "shrink-0 rounded-full bg-yellow-400 px-4 py-3 text-xs font-black text-black sm:py-2 sm:text-sm"
-                      : "shrink-0 rounded-full bg-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/20 sm:py-2 sm:text-sm"
+                      ? "shrink-0 rounded-full bg-yellow-400 px-4 py-3 text-xs font-black text-black sm:text-sm"
+                      : "shrink-0 rounded-full bg-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/20 sm:text-sm"
                   }
                 >
                   {item}
@@ -348,24 +443,28 @@ export default function HomePage() {
             disabled={loading}
             className="w-full rounded-2xl bg-gradient-to-r from-yellow-300 to-orange-400 py-5 text-base font-black text-black transition hover:scale-[1.01] disabled:opacity-50 sm:py-4"
           >
-            {loading ? "AI가 조회수 구조를 분석 중..." : "🔥 AI 조회수 설계 시작"}
+            {loading
+              ? "AI가 스토리텔링 대본 생성 중..."
+              : "🔥 쇼츠 대본 생성"}
           </button>
         </div>
 
         <aside className="space-y-5">
           <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
-            <h2 className="mb-2 text-2xl font-black">🔥 오늘 뜨는 쇼츠</h2>
+            <h2 className="mb-2 text-2xl font-black">
+              🔥 오늘 뜨는 주제
+            </h2>
 
             <p className="mb-4 text-sm text-slate-500">
-              무엇을 만들지 모르겠다면 아래 주제를 눌러 바로 시작하세요.
+              클릭하면 바로 테스트할 수 있어요.
             </p>
 
             {[
-              "AI 때문에 사라질 직업 5가지",
-              "99%가 모르는 돈 버는 습관",
-              "연애에서 정 떨어지는 말",
-              "초보 유튜버가 조회수 안 나오는 이유",
-              "요즘 유행하는 유머 밈 분석",
+              "월급 들어와도 돈이 안 남는 이유",
+              "연애할 때 정 떨어지는 순간",
+              "요즘 유튜버들이 조회수 뽑는 방식",
+              "사람들이 은근 많이 하는 소비 습관",
+              "친구 손절하게 되는 이유",
               "가성비 제품 리뷰 쇼츠",
             ].map((item) => (
               <button
@@ -394,7 +493,7 @@ export default function HomePage() {
 
             {history.length === 0 ? (
               <p className="text-sm font-bold leading-6 text-slate-500">
-                아직 저장된 생성 기록이 없습니다.
+                아직 생성 기록이 없습니다.
               </p>
             ) : (
               <div className="space-y-3">
@@ -409,7 +508,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="text-xs font-bold text-slate-500">
-                      {item.category} · {item.preset} ·{" "}
+                      {item.length} · {item.tone} ·{" "}
                       {getScoreFromResult(item.result)}점
                     </div>
 
@@ -431,12 +530,12 @@ export default function HomePage() {
               <div className="h-4 w-4 animate-pulse rounded-full bg-yellow-300" />
 
               <h2 className="text-xl font-black text-yellow-200 sm:text-2xl">
-                AI가 조회수 구조 분석 중...
+                AI가 몰입형 쇼츠 대본 생성 중...
               </h2>
             </div>
 
             <p className="text-sm font-bold text-yellow-100/80">
-              선택한 프리셋에 맞춰 제목, 썸네일, 해시태그, 장면별 대본을 설계하고 있습니다.
+              {length} · {tone} · {preset} 기준으로 대본을 만들고 있습니다.
             </p>
           </div>
         </section>
@@ -447,12 +546,16 @@ export default function HomePage() {
           <div className="mb-5 rounded-[28px] bg-gradient-to-r from-yellow-300 to-orange-400 p-5 text-slate-950 shadow-2xl sm:rounded-[32px] sm:p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm font-black opacity-70">VIRAL SCORE</p>
-                <h2 className="text-5xl font-black">{parsed.score} / 100</h2>
+                <p className="text-sm font-black opacity-70">
+                  VIRAL SCORE
+                </p>
+
+                <h2 className="text-5xl font-black">
+                  {parsed.score} / 100
+                </h2>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6">
-                  AI가 후킹, 댓글 유도, 리텐션 가능성을 기준으로 조회수 잠재력을
-                  점수화했습니다.
+                  실제 쇼츠 스타일 기준으로 몰입감과 리텐션 흐름을 분석했습니다.
                 </p>
               </div>
 
@@ -466,9 +569,20 @@ export default function HomePage() {
           </div>
 
           <div className="mb-5 grid gap-5 md:grid-cols-3">
-            <ResultCard title="🎣 후킹 분석" text={parsed.hook || "분석 결과 없음"} />
-            <ResultCard title="💬 댓글 유도 분석" text={parsed.comment || "분석 결과 없음"} />
-            <ResultCard title="⏱ 리텐션 분석" text={parsed.retention || "분석 결과 없음"} />
+            <ResultCard
+              title="🎣 후킹 분석"
+              text={parsed.hook || "분석 결과 없음"}
+            />
+
+            <ResultCard
+              title="💬 댓글 유도 분석"
+              text={parsed.comment || "분석 결과 없음"}
+            />
+
+            <ResultCard
+              title="⏱ 리텐션 분석"
+              text={parsed.retention || "분석 결과 없음"}
+            />
           </div>
 
           <div className="mb-5 grid gap-5 md:grid-cols-3">
@@ -500,7 +614,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="mt-2 text-sm font-bold text-slate-500">
-                  시간대별로 나뉜 대본입니다. 그대로 편집 메모나 자막 제작에 활용할 수 있습니다.
+                  실제 영상 녹음용 대사 중심으로 생성됩니다.
                 </p>
               </div>
 
@@ -520,10 +634,12 @@ export default function HomePage() {
           <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-2xl font-black sm:text-3xl">📄 전체 결과</h2>
+                <h2 className="text-2xl font-black sm:text-3xl">
+                  📄 전체 결과
+                </h2>
 
                 <p className="mt-2 text-sm font-bold text-slate-500">
-                  전체 결과를 복사해서 촬영 대본, 편집 메모, 콘텐츠 기획안으로 사용할 수 있습니다.
+                  전체 결과를 복사해서 바로 촬영할 수 있습니다.
                 </p>
               </div>
 
@@ -552,93 +668,25 @@ export default function HomePage() {
         </section>
       )}
 
-      {showAdModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
-            <h2 className="mb-3 text-2xl font-black">
-              무료 생성 횟수를 모두 사용했어요
-            </h2>
-
-            <p className="mb-5 text-sm font-bold leading-6 text-slate-600">
-              하루 5회까지는 무료로 바로 생성할 수 있습니다.
-              계속 사용하려면 광고를 보고 1회 더 생성할 수 있어요.
-            </p>
-
-            <div className="mb-5 rounded-2xl bg-slate-100 p-5 text-center text-sm font-black text-slate-500">
-              광고 영역 준비중
-              <br />
-              나중에 실제 광고 SDK가 들어갈 자리입니다.
-            </div>
-
-            <button
-              onClick={continueAfterAd}
-              className="mb-3 w-full rounded-2xl bg-yellow-400 py-4 font-black text-black"
-            >
-              광고 보고 계속 생성하기
-            </button>
-
-            <button
-              onClick={() => setShowAdModal(false)}
-              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showProModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
-            <div className="mb-4 inline-flex rounded-full bg-yellow-100 px-4 py-2 text-sm font-black text-yellow-800">
-              Pro 준비중
-            </div>
-
-            <h2 className="mb-3 text-3xl font-black">
-              광고 없이 무제한으로 만들기
-            </h2>
-
-            <p className="mb-6 text-sm font-bold leading-6 text-slate-600">
-              ShortsFlow Pro는 계속 쇼츠를 만드는 크리에이터를 위한 기능입니다.
-              정식 출시 전까지는 무료 MVP로 먼저 테스트할 수 있습니다.
-            </p>
-
-            <div className="mb-6 space-y-3 rounded-2xl bg-slate-100 p-5 text-sm font-bold text-slate-700">
-              <div>✅ 광고 없이 무제한 생성</div>
-              <div>✅ 고급 바이럴 점수 분석</div>
-              <div>✅ 생성 기록 저장 강화</div>
-              <div>✅ 썸네일 문구 / 제목 A/B 테스트</div>
-              <div>✅ 해시태그 / 대본 Export 기능</div>
-            </div>
-
-            <button
-              onClick={() => setShowProModal(false)}
-              className="mb-3 w-full rounded-2xl bg-yellow-400 py-4 font-black text-black"
-            >
-              알겠어요
-            </button>
-
-            <button
-              onClick={() => setShowProModal(false)}
-              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
-
       <footer className="border-t border-white/10 px-4 py-8 text-center text-xs font-bold leading-6 text-white/40 sm:px-6 sm:text-sm">
-        ShortsFlow · AI 조회수 설계 도구 · 무료 MVP 테스트 버전
+        ShortsFlow · AI 쇼츠 스토리텔링 생성기
       </footer>
     </main>
   );
 }
 
-function ResultCard({ title, text }: { title: string; text: string }) {
+function ResultCard({
+  title,
+  text,
+}: {
+  title: string;
+  text: string;
+}) {
   return (
     <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
-      <h3 className="mb-3 text-lg font-black sm:text-xl">{title}</h3>
+      <h3 className="mb-3 text-lg font-black sm:text-xl">
+        {title}
+      </h3>
 
       <p className="whitespace-pre-wrap text-sm font-bold leading-7 text-slate-600">
         {text}
@@ -667,7 +715,9 @@ function CopyCard({
       }
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-lg font-black sm:text-xl">{title}</h3>
+        <h3 className="text-lg font-black sm:text-xl">
+          {title}
+        </h3>
 
         <button
           onClick={onCopy}
