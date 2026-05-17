@@ -8,7 +8,7 @@ export async function POST(req: Request) {
       topic = "",
       platform = "YouTube Shorts",
       style = "자극형",
-      category = "정보형",
+      category = "돈/부업",
     } = body;
 
     const prompt = `
@@ -26,16 +26,16 @@ export async function POST(req: Request) {
 출력 형식 반드시 유지:
 
 [바이럴 점수]
-0~100 사이 숫자와 이유
+0~100 점수 + 이유
 
 [후킹 분석]
-왜 첫 3초가 강한지 설명
+첫 3초가 왜 강한지 설명
 
 [댓글 유도 분석]
-댓글이 달릴 포인트 설명
+댓글 유도 포인트 설명
 
 [리텐션 분석]
-시청 지속 시간 유지 전략 설명
+시청 지속 전략 설명
 
 [쇼츠 제목]
 조회수 잘 나오는 제목 5개
@@ -46,16 +46,30 @@ export async function POST(req: Request) {
 [해시태그]
 조회수용 해시태그 10개
 
-[쇼츠 대본]
-실제 쇼츠용 대본 작성
+[CapCut/Vrew용 장면 대본]
+시간대별 장면 구분
+
+예시 형식:
+[0~3초]
+대사
+장면 설명
+
+[3~7초]
+대사
+장면 설명
+
+[7~15초]
+대사
+장면 설명
 
 규칙:
+- 실제 쇼츠 스타일
 - 짧은 문장
-- 첫 줄 강한 후킹
-- 중간 이탈 방지
+- 빠른 템포
+- 첫 문장 강한 후킹
+- 중간 반전
 - 마지막 CTA 포함
-- 실제 조회수 잘 나오는 느낌
-- 너무 AI스럽지 않게
+- AI스럽지 않게
 `;
 
     const response = await fetch(
@@ -80,7 +94,7 @@ export async function POST(req: Request) {
             },
           ],
           temperature: 0.9,
-          max_tokens: 2200,
+          max_tokens: 2500,
         }),
       }
     );
@@ -88,8 +102,6 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.log(data);
-
       return NextResponse.json(
         {
           error: data.error?.message || "OpenAI API 오류",
