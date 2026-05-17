@@ -3,6 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 const FREE_LIMIT = 5;
+const HISTORY_KEY = "shortsflow_history";
+
+type HistoryItem = {
+  id: string;
+  topic: string;
+  category: string;
+  platform: string;
+  style: string;
+  result: string;
+  createdAt: string;
+};
 
 function todayKey() {
   const now = new Date();
@@ -19,6 +30,14 @@ function extractSection(text: string, title: string) {
   return match ? match[1].trim() : "";
 }
 
+function getScoreFromResult(text: string) {
+  const scoreText = extractSection(text, "바이럴 점수");
+  const scoreNumber = Number(scoreText.replace(/[^0-9]/g, ""));
+
+  if (Number.isNaN(scoreNumber)) return 78;
+  return Math.min(100, Math.max(0, scoreNumber));
+}
+
 export default function HomePage() {
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState("YouTube Shorts");
@@ -28,18 +47,23 @@ export default function HomePage() {
   const [result, setResult] = useState("");
   const [showAdModal, setShowAdModal] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
     const count = Number(localStorage.getItem(usageKey()) || 0);
     setUsageCount(count);
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      setHistory(Array.isArray(saved) ? saved : []);
+    } catch {
+      setHistory([]);
+    }
   }, []);
 
   const parsed = useMemo(() => {
-    const scoreText = extractSection(result, "바이럴 점수");
-    const scoreNumber = Number(scoreText.replace(/[^0-9]/g, ""));
-
     return {
-      score: Number.isNaN(scoreNumber) ? 78 : Math.min(100, scoreNumber),
+      score: getScoreFromResult(result),
       hook: extractSection(result, "후킹 분석"),
       comment: extractSection(result, "댓글 유도 분석"),
       retention: extractSection(result, "리텐션 분석"),
@@ -59,6 +83,37 @@ export default function HomePage() {
     const next = getUsageCount() + 1;
     localStorage.setItem(usageKey(), String(next));
     setUsageCount(next);
+  }
+
+  function saveHistory(newResult: string) {
+    const item: HistoryItem = {
+      id: String(Date.now()),
+      topic,
+      category,
+      platform,
+      style,
+      result: newResult,
+      createdAt: new Date().toLocaleString("ko-KR"),
+    };
+
+    const next = [item, ...history].slice(0, 5);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  }
+
+  function openHistoryItem(item: HistoryItem) {
+    setTopic(item.topic);
+    setCategory(item.category);
+    setPlatform(item.platform);
+    setStyle(item.style);
+    setResult(item.result);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function clearHistory() {
+    if (!confirm("최근 생성 기록을 모두 삭제할까요?")) return;
+    setHistory([]);
+    localStorage.removeItem(HISTORY_KEY);
   }
 
   async function handleGenerateClick() {
@@ -109,6 +164,7 @@ export default function HomePage() {
 
       setResult(data.result);
       increaseUsage();
+      saveHistory(data.result);
     } catch (error) {
       alert("AI 생성 중 오류가 발생했습니다.");
     } finally {
@@ -238,6 +294,46 @@ export default function HomePage() {
                 {item}
               </button>
             ))}
+          </div>
+
+          <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-xl font-black">최근 생성 기록</h2>
+
+              {history.length > 0 && (
+                <button
+                  onClick={clearHistory}
+                  className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
+
+            {history.length === 0 ? (
+              <p className="text-sm font-bold leading-6 text-slate-500">
+                아직 저장된 생성 기록이 없습니다.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {history.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => openHistoryItem(item)}
+                    className="w-full rounded-2xl bg-slate-100 p-4 text-left hover:bg-slate-200"
+                  >
+                    <div className="mb-1 text-sm font-black text-slate-900">
+                      {item.topic}
+                    </div>
+
+                    <div className="text-xs font-bold text-slate-500">
+                      {item.category} · {getScoreFromResult(item.result)}점 ·{" "}
+                      {item.createdAt}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
       </section>
