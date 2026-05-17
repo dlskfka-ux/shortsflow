@@ -53,6 +53,17 @@ function extractSection(text: string, title: string) {
   return match ? match[1].trim() : "";
 }
 
+function extractDialogueOnly(sceneScript: string) {
+  if (!sceneScript) return "";
+
+  return sceneScript
+    .split("\n")
+    .filter((line) => line.trim().startsWith("대사:"))
+    .map((line) => line.replace("대사:", "").trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function getScoreFromResult(text: string) {
   const scoreText = extractSection(text, "바이럴 점수");
   const scoreNumber = Number(scoreText.replace(/[^0-9]/g, ""));
@@ -92,6 +103,8 @@ export default function HomePage() {
   }, []);
 
   const parsed = useMemo(() => {
+    const sceneScript = extractSection(result, "CapCut/Vrew용 장면 대본");
+
     return {
       score: getScoreFromResult(result),
       hook: extractSection(result, "후킹 분석"),
@@ -100,7 +113,8 @@ export default function HomePage() {
       titles: extractSection(result, "쇼츠 제목"),
       thumbnails: extractSection(result, "썸네일 문구"),
       hashtags: extractSection(result, "해시태그"),
-      sceneScript: extractSection(result, "CapCut/Vrew용 장면 대본"),
+      sceneScript,
+      dialogueOnly: extractDialogueOnly(sceneScript),
     };
   }, [result]);
 
@@ -618,18 +632,54 @@ ${url}`;
                 </p>
               </div>
 
-              <button
-                onClick={() => copyText(parsed.sceneScript)}
-                className="rounded-xl bg-yellow-400 px-4 py-4 text-sm font-black text-black sm:py-2"
-              >
-                장면 대본 복사
-              </button>
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <button
+                  onClick={() => copyText(parsed.sceneScript)}
+                  className="rounded-xl bg-yellow-400 px-4 py-4 text-sm font-black text-black sm:py-2"
+                >
+                  장면 대본 복사
+                </button>
+
+                <button
+                  onClick={() => copyText(parsed.dialogueOnly)}
+                  className="rounded-xl bg-slate-900 px-4 py-4 text-sm font-black text-white sm:py-2"
+                >
+                  대사만 복사
+                </button>
+              </div>
             </div>
 
             <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-100 p-5 text-sm leading-7 sm:p-6">
               {parsed.sceneScript || "장면 대본 결과 없음"}
             </pre>
           </div>
+
+          {parsed.dialogueOnly && (
+            <div className="mb-5 rounded-[28px] bg-yellow-50 p-5 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
+              <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-black sm:text-3xl">
+                    🎙 녹음용 대사만 보기
+                  </h2>
+
+                  <p className="mt-2 text-sm font-bold text-slate-600">
+                    장면 설명을 제외하고 실제 말할 대사만 정리했습니다.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => copyText(parsed.dialogueOnly)}
+                  className="rounded-xl bg-slate-900 px-4 py-4 text-sm font-black text-white sm:py-2"
+                >
+                  대사만 복사
+                </button>
+              </div>
+
+              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-5 text-sm font-bold leading-8 text-slate-800 sm:p-6">
+                {parsed.dialogueOnly}
+              </pre>
+            </div>
+          )}
 
           <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -666,6 +716,82 @@ ${url}`;
             </pre>
           </div>
         </section>
+      )}
+
+      {showAdModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
+            <h2 className="mb-3 text-2xl font-black">
+              무료 생성 횟수를 모두 사용했어요
+            </h2>
+
+            <p className="mb-5 text-sm font-bold leading-6 text-slate-600">
+              하루 5회까지는 무료로 바로 생성할 수 있습니다.
+              계속 사용하려면 광고를 보고 1회 더 생성할 수 있어요.
+            </p>
+
+            <div className="mb-5 rounded-2xl bg-slate-100 p-5 text-center text-sm font-black text-slate-500">
+              광고 영역 준비중
+              <br />
+              나중에 실제 광고 SDK가 들어갈 자리입니다.
+            </div>
+
+            <button
+              onClick={continueAfterAd}
+              className="mb-3 w-full rounded-2xl bg-yellow-400 py-4 font-black text-black"
+            >
+              광고 보고 계속 생성하기
+            </button>
+
+            <button
+              onClick={() => setShowAdModal(false)}
+              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showProModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
+            <div className="mb-4 inline-flex rounded-full bg-yellow-100 px-4 py-2 text-sm font-black text-yellow-800">
+              Pro 준비중
+            </div>
+
+            <h2 className="mb-3 text-3xl font-black">
+              광고 없이 무제한으로 만들기
+            </h2>
+
+            <p className="mb-6 text-sm font-bold leading-6 text-slate-600">
+              ShortsFlow Pro는 계속 쇼츠를 만드는 크리에이터를 위한 기능입니다.
+              정식 출시 전까지는 무료 MVP로 먼저 테스트할 수 있습니다.
+            </p>
+
+            <div className="mb-6 space-y-3 rounded-2xl bg-slate-100 p-5 text-sm font-bold text-slate-700">
+              <div>✅ 광고 없이 무제한 생성</div>
+              <div>✅ 고급 바이럴 점수 분석</div>
+              <div>✅ 생성 기록 저장 강화</div>
+              <div>✅ 썸네일 문구 / 제목 A/B 테스트</div>
+              <div>✅ 해시태그 / 대본 Export 기능</div>
+            </div>
+
+            <button
+              onClick={() => setShowProModal(false)}
+              className="mb-3 w-full rounded-2xl bg-yellow-400 py-4 font-black text-black"
+            >
+              알겠어요
+            </button>
+
+            <button
+              onClick={() => setShowProModal(false)}
+              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
       )}
 
       <footer className="border-t border-white/10 px-4 py-8 text-center text-xs font-bold leading-6 text-white/40 sm:px-6 sm:text-sm">
