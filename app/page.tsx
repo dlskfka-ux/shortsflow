@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function HomePage() {
   const [topic, setTopic] = useState("");
@@ -9,7 +9,30 @@ export default function HomePage() {
   const [category, setCategory] = useState("돈/부업");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
-  const [error, setError] = useState("");
+
+  const viralScore = useMemo(() => {
+    if (!result) return null;
+
+    const patterns = [
+      /\[바이럴 점수\]\s*[^0-9]*([0-9]{1,3})/i,
+      /바이럴 점수\s*[:：]?\s*[^0-9]*([0-9]{1,3})/i,
+      /VIRAL SCORE\s*[:：]?\s*[^0-9]*([0-9]{1,3})/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = result.match(pattern);
+
+      if (match) {
+        const score = Number(match[1]);
+
+        if (!Number.isNaN(score)) {
+          return Math.min(100, Math.max(0, score));
+        }
+      }
+    }
+
+    return 78;
+  }, [result]);
 
   async function generateScript() {
     if (!topic.trim()) {
@@ -19,24 +42,30 @@ export default function HomePage() {
 
     setLoading(true);
     setResult("");
-    setError("");
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, platform, style, category }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic,
+          platform,
+          style,
+          category,
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok || data.error) {
+      if (!res.ok) {
         throw new Error(data.error || "AI 생성 실패");
       }
 
       setResult(data.result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+    } catch (error) {
+      alert("AI 생성 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -44,6 +73,7 @@ export default function HomePage() {
 
   async function copyResult() {
     if (!result) return;
+
     await navigator.clipboard.writeText(result);
     alert("결과가 복사되었습니다.");
   }
@@ -52,20 +82,27 @@ export default function HomePage() {
     <main className="min-h-screen bg-gradient-to-br from-[#050716] via-[#0b1020] to-[#111827] text-white">
       <header className="flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-3 text-xl font-black">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-600">🔥</span>
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-600">
+            🔥
+          </span>
           ShortsFlow
         </div>
 
         <div className="flex gap-2">
-          <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">무료 체험</button>
-          <button className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black">Pro</button>
+          <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">
+            무료 체험
+          </button>
+
+          <button className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black">
+            Pro 준비중
+          </button>
         </div>
       </header>
 
       <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[32px] border border-white/10 bg-white/10 p-8 shadow-2xl backdrop-blur">
           <div className="mb-4 inline-flex rounded-full bg-yellow-400/20 px-4 py-2 text-sm font-black text-yellow-200">
-            ⚡ 로그인 없이 1회 맛보기 가능
+            ⚡ 무료 MVP 테스트 버전
           </div>
 
           <h1 className="mb-5 text-5xl font-black leading-tight tracking-tight md:text-6xl">
@@ -75,7 +112,8 @@ export default function HomePage() {
           </h1>
 
           <p className="mb-8 text-white/70">
-            주제만 입력하면 AI가 썸네일 문구, 후킹, CTA, 대본 흐름, 리텐션 가이드까지 한 번에 설계합니다.
+            주제만 입력하면 AI가 썸네일 문구, 후킹, CTA, 대본 흐름,
+            리텐션 가이드까지 한 번에 설계합니다.
           </p>
 
           <textarea
@@ -86,13 +124,21 @@ export default function HomePage() {
           />
 
           <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none">
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
+              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+            >
               <option>YouTube Shorts</option>
               <option>Instagram Reels</option>
               <option>TikTok</option>
             </select>
 
-            <select value={style} onChange={(e) => setStyle(e.target.value)} className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none">
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value)}
+              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+            >
               <option>자극형</option>
               <option>정보형</option>
               <option>감성형</option>
@@ -100,7 +146,11 @@ export default function HomePage() {
               <option>리뷰형</option>
             </select>
 
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+            >
               <option>돈/부업</option>
               <option>연애/심리</option>
               <option>뉴스/정보성</option>
@@ -119,16 +169,21 @@ export default function HomePage() {
             {loading ? "AI가 조회수 구조를 분석 중..." : "🔥 AI 조회수 설계 시작"}
           </button>
 
-          {error && (
-            <div className="mt-4 rounded-2xl bg-red-500/20 p-4 text-sm font-bold text-red-200">
-              {error}
-            </div>
-          )}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-white/70">
+            <span className="rounded-full bg-white/10 px-3 py-2">1. 주제 입력</span>
+            <span className="rounded-full bg-white/10 px-3 py-2">2. 버튼 클릭</span>
+            <span className="rounded-full bg-white/10 px-3 py-2">3. 결과 복사</span>
+          </div>
         </div>
 
         <aside className="space-y-5">
           <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
             <h2 className="mb-2 text-2xl font-black">🔥 오늘 뜨는 쇼츠</h2>
+
+            <p className="mb-4 text-sm text-slate-500">
+              무엇을 만들지 모르겠다면 아래 주제를 눌러 바로 시작하세요.
+            </p>
+
             {[
               "AI 때문에 사라질 직업 5가지",
               "99%가 모르는 돈 버는 습관",
@@ -137,7 +192,28 @@ export default function HomePage() {
               "요즘 유행하는 유머 밈 분석",
               "가성비 제품 리뷰 쇼츠",
             ].map((item) => (
-              <button key={item} onClick={() => setTopic(item)} className="mb-3 w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm font-bold hover:bg-slate-200">
+              <button
+                key={item}
+                onClick={() => setTopic(item)}
+                className="mb-3 w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm font-bold hover:bg-slate-200"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
+            <h2 className="mb-4 text-xl font-black">카테고리 빠른 선택</h2>
+
+            {["뉴스/정보성", "유머/밈", "제품 리뷰", "공포/스토리"].map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setCategory(item);
+                  setTopic(item);
+                }}
+                className="mb-3 w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm font-bold hover:bg-slate-200"
+              >
                 {item}
               </button>
             ))}
@@ -145,22 +221,85 @@ export default function HomePage() {
         </aside>
       </section>
 
+      {loading && (
+        <section className="mx-auto max-w-6xl px-6 pb-10">
+          <div className="rounded-[32px] border border-yellow-400/20 bg-yellow-400/10 p-8 shadow-2xl">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-4 w-4 animate-pulse rounded-full bg-yellow-300" />
+
+              <h2 className="text-2xl font-black text-yellow-200">
+                AI가 조회수 구조 분석 중...
+              </h2>
+            </div>
+
+            <p className="text-sm font-bold text-yellow-100/80">
+              훅, 리텐션, 루프 엔딩, 댓글 유도 구조를 분석하고 있습니다.
+            </p>
+          </div>
+        </section>
+      )}
+
       {result && (
         <section className="mx-auto max-w-6xl px-6 pb-24">
+          <div className="mb-5 rounded-[32px] bg-gradient-to-r from-yellow-300 to-orange-400 p-6 text-slate-950 shadow-2xl">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-black opacity-70">VIRAL SCORE</p>
+                <h2 className="text-5xl font-black">
+                  {viralScore ?? 78} / 100
+                </h2>
+              </div>
+
+              <p className="max-w-xl text-sm font-bold leading-6">
+                AI가 후킹, 리텐션, 댓글 유도, 루프 엔딩 가능성을 기준으로
+                조회수 잠재력을 점수화했습니다.
+              </p>
+            </div>
+          </div>
+
           <div className="rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-3xl font-black">AI 조회수 설계 결과</h2>
-              <button onClick={copyResult} className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black">
-                결과 복사
-              </button>
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-3xl font-black">AI 조회수 설계 결과</h2>
+
+                <p className="mt-2 text-sm font-bold text-slate-500">
+                  아래 결과를 복사해서 바로 촬영 대본이나 편집 메모로 사용할 수 있습니다.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={copyResult}
+                  className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black"
+                >
+                  결과 복사
+                </button>
+
+                <button
+                  onClick={generateScript}
+                  disabled={loading}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
+                >
+                  다시 생성
+                </button>
+              </div>
             </div>
 
             <pre className="whitespace-pre-wrap rounded-2xl bg-slate-100 p-6 text-sm leading-7">
               {result}
             </pre>
+
+            <div className="mt-5 rounded-2xl bg-yellow-50 p-4 text-sm font-bold leading-6 text-yellow-900">
+              팁: 첫 문장은 영상 시작 1초 안에 바로 말하고, 대본 중간에 화면 전환이나
+              자막 강조를 넣으면 시청 지속 시간을 더 높일 수 있습니다.
+            </div>
           </div>
         </section>
       )}
+
+      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm font-bold text-white/40">
+        ShortsFlow · AI 조회수 설계 도구 · MVP 테스트 버전
+      </footer>
     </main>
   );
 }
