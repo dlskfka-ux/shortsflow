@@ -53,6 +53,12 @@ function extractSection(text: string, title: string) {
   return match ? match[1].trim() : "";
 }
 
+function extractHookType(text: string, type: string) {
+  const regex = new RegExp(`${type}:\\s*([\\s\\S]*?)(?=\\n\\S+형:|$)`, "i");
+  const match = text.match(regex);
+  return match ? match[1].trim() : "";
+}
+
 function extractDialogueOnly(sceneScript: string) {
   if (!sceneScript) return "";
 
@@ -103,10 +109,15 @@ export default function HomePage() {
   }, []);
 
   const parsed = useMemo(() => {
+    const hookVariations = extractSection(result, "첫 3초 후킹 3종");
     const sceneScript = extractSection(result, "CapCut/Vrew용 장면 대본");
 
     return {
       score: getScoreFromResult(result),
+      hookVariations,
+      curiosityHook: extractHookType(hookVariations, "궁금증형"),
+      empathyHook: extractHookType(hookVariations, "공감형"),
+      controversyHook: extractHookType(hookVariations, "논란형"),
       hook: extractSection(result, "후킹 분석"),
       comment: extractSection(result, "댓글 유도 분석"),
       retention: extractSection(result, "리텐션 분석"),
@@ -583,6 +594,27 @@ ${url}`;
           </div>
 
           <div className="mb-5 grid gap-5 md:grid-cols-3">
+            <CopyCard
+              title="🧠 궁금증형 후킹"
+              text={parsed.curiosityHook || "후킹 결과 없음"}
+              onCopy={() => copyText(parsed.curiosityHook)}
+              highlight
+            />
+
+            <CopyCard
+              title="🤝 공감형 후킹"
+              text={parsed.empathyHook || "후킹 결과 없음"}
+              onCopy={() => copyText(parsed.empathyHook)}
+            />
+
+            <CopyCard
+              title="🔥 논란형 후킹"
+              text={parsed.controversyHook || "후킹 결과 없음"}
+              onCopy={() => copyText(parsed.controversyHook)}
+            />
+          </div>
+
+          <div className="mb-5 grid gap-5 md:grid-cols-3">
             <ResultCard
               title="🎣 후킹 분석"
               text={parsed.hook || "분석 결과 없음"}
@@ -624,7 +656,6 @@ ${url}`;
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-2xl font-black sm:text-3xl">
-                  🎞 CapCut/Vrew용 장면 대본
                 </h2>
 
                 <p className="mt-2 text-sm font-bold text-slate-500">
@@ -675,7 +706,7 @@ ${url}`;
                 </button>
               </div>
 
-              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-5 text-sm font-bold leading-8 text-slate-800 sm:p-6">
+              <pre className="whitespace-pre-wrap rounded-2xl bg-white p-6 text-base font-bold leading-9 text-slate-800">
                 {parsed.dialogueOnly}
               </pre>
             </div>
