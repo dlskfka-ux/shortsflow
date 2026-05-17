@@ -71,6 +71,7 @@ export default function HomePage() {
       titles: extractSection(result, "쇼츠 제목"),
       thumbnails: extractSection(result, "썸네일 문구"),
       hashtags: extractSection(result, "해시태그"),
+      sceneScript: extractSection(result, "CapCut/Vrew용 장면 대본"),
       script: extractSection(result, "쇼츠 대본"),
     };
   }, [result]);
@@ -216,8 +217,8 @@ export default function HomePage() {
           </h1>
 
           <p className="mb-8 text-white/70">
-            주제만 입력하면 AI가 썸네일 문구, 후킹, 제목, 해시태그,
-            대본 흐름까지 한 번에 설계합니다.
+            주제만 입력하면 AI가 제목, 썸네일 문구, 해시태그, 후킹 분석,
+            CapCut/Vrew용 장면 대본까지 한 번에 설계합니다.
           </p>
 
           <textarea
@@ -347,13 +348,14 @@ export default function HomePage() {
           <div className="rounded-[32px] border border-yellow-400/20 bg-yellow-400/10 p-8 shadow-2xl">
             <div className="mb-3 flex items-center gap-3">
               <div className="h-4 w-4 animate-pulse rounded-full bg-yellow-300" />
+
               <h2 className="text-2xl font-black text-yellow-200">
                 AI가 조회수 구조 분석 중...
               </h2>
             </div>
 
             <p className="text-sm font-bold text-yellow-100/80">
-              제목, 썸네일, 해시태그, 후킹, 리텐션 구조를 분석하고 있습니다.
+              제목, 썸네일, 해시태그, 후킹, 장면별 대본 구조를 분석하고 있습니다.
             </p>
           </div>
         </section>
@@ -364,6 +366,7 @@ export default function HomePage() {
           <div className="mb-5 rounded-[32px] bg-gradient-to-r from-yellow-300 to-orange-400 p-6 text-slate-950 shadow-2xl">
             <p className="text-sm font-black opacity-70">VIRAL SCORE</p>
             <h2 className="text-5xl font-black">{parsed.score} / 100</h2>
+
             <p className="mt-3 max-w-2xl text-sm font-bold leading-6">
               AI가 후킹, 댓글 유도, 리텐션 가능성을 기준으로 조회수 잠재력을
               점수화했습니다.
@@ -397,12 +400,38 @@ export default function HomePage() {
             />
           </div>
 
+          <div className="mb-5 rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-3xl font-black">
+                  🎞 CapCut/Vrew용 장면 대본
+                </h2>
+
+                <p className="mt-2 text-sm font-bold text-slate-500">
+                  시간대별로 나뉜 대본입니다. 그대로 편집 메모나 자막 제작에 활용할 수 있습니다.
+                </p>
+              </div>
+
+              <button
+                onClick={() => copyText(parsed.sceneScript)}
+                className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black"
+              >
+                장면 대본 복사
+              </button>
+            </div>
+
+            <pre className="whitespace-pre-wrap rounded-2xl bg-slate-100 p-6 text-sm leading-7">
+              {parsed.sceneScript || "장면 대본 결과 없음"}
+            </pre>
+          </div>
+
           <div className="rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-3xl font-black">🎬 쇼츠 대본</h2>
+                <h2 className="text-3xl font-black">📄 전체 결과</h2>
+
                 <p className="mt-2 text-sm font-bold text-slate-500">
-                  아래 대본을 복사해서 바로 촬영 또는 편집 메모로 사용할 수 있습니다.
+                  전체 결과를 복사해서 촬영 대본, 편집 메모, 콘텐츠 기획안으로 사용할 수 있습니다.
                 </p>
               </div>
 
@@ -425,7 +454,7 @@ export default function HomePage() {
             </div>
 
             <pre className="whitespace-pre-wrap rounded-2xl bg-slate-100 p-6 text-sm leading-7">
-              {parsed.script || result}
+              {result}
             </pre>
           </div>
         </section>
@@ -518,6 +547,7 @@ function ResultCard({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
       <h3 className="mb-3 text-xl font-black">{title}</h3>
+
       <p className="whitespace-pre-wrap text-sm font-bold leading-7 text-slate-600">
         {text}
       </p>
