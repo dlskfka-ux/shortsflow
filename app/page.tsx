@@ -5,12 +5,23 @@ import { useEffect, useMemo, useState } from "react";
 const FREE_LIMIT = 5;
 const HISTORY_KEY = "shortsflow_history";
 
+const PRESETS = [
+  "기본 조회수 코치",
+  "MrBeast 스타일",
+  "정보형 스타일",
+  "돈/부업 스타일",
+  "밈/유머 스타일",
+  "책요약 스타일",
+  "영화리뷰 스타일",
+];
+
 type HistoryItem = {
   id: string;
   topic: string;
   category: string;
   platform: string;
   style: string;
+  preset: string;
   result: string;
   createdAt: string;
 };
@@ -43,6 +54,7 @@ export default function HomePage() {
   const [platform, setPlatform] = useState("YouTube Shorts");
   const [style, setStyle] = useState("자극형");
   const [category, setCategory] = useState("돈/부업");
+  const [preset, setPreset] = useState("기본 조회수 코치");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [showAdModal, setShowAdModal] = useState(false);
@@ -72,7 +84,6 @@ export default function HomePage() {
       thumbnails: extractSection(result, "썸네일 문구"),
       hashtags: extractSection(result, "해시태그"),
       sceneScript: extractSection(result, "CapCut/Vrew용 장면 대본"),
-      script: extractSection(result, "쇼츠 대본"),
     };
   }, [result]);
 
@@ -94,6 +105,7 @@ export default function HomePage() {
       category,
       platform,
       style,
+      preset,
       result: newResult,
       createdAt: new Date().toLocaleString("ko-KR"),
     };
@@ -108,6 +120,7 @@ export default function HomePage() {
     setCategory(item.category);
     setPlatform(item.platform);
     setStyle(item.style);
+    setPreset(item.preset || "기본 조회수 코치");
     setResult(item.result);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -155,6 +168,7 @@ export default function HomePage() {
           platform,
           style,
           category,
+          preset,
         }),
       });
 
@@ -167,7 +181,7 @@ export default function HomePage() {
       setResult(data.result);
       increaseUsage();
       saveHistory(data.result);
-    } catch (error) {
+    } catch {
       alert("AI 생성 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
@@ -180,9 +194,43 @@ export default function HomePage() {
     alert("복사되었습니다.");
   }
 
+  async function shareSite() {
+    const url = window.location.href;
+    const shareText = `🔥 ShortsFlow\nAI가 쇼츠 제목, 썸네일 문구, 해시태그, 장면 대본까지 만들어주는 무료 툴\n\n${url}`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "ShortsFlow",
+        text: shareText,
+        url,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareText);
+    alert("공유 문구와 링크가 복사되었습니다.");
+  }
+
+  async function shareResult() {
+    const url = window.location.href;
+    const shareText = `🔥 ShortsFlow로 만든 쇼츠 아이디어\n\n주제: ${topic}\n프리셋: ${preset}\n바이럴 점수: ${parsed.score}/100\n\n${parsed.titles || ""}\n\n${url}`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "ShortsFlow 결과",
+        text: shareText,
+        url,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareText);
+    alert("공유용 결과가 복사되었습니다.");
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#050716] via-[#0b1020] to-[#111827] text-white">
-      <header className="flex items-center justify-between px-6 py-5">
+      <header className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
         <div className="flex items-center gap-3 text-xl font-black">
           <span className="grid h-10 w-10 place-items-center rounded-2xl bg-violet-600">
             🔥
@@ -190,33 +238,40 @@ export default function HomePage() {
           ShortsFlow
         </div>
 
-        <div className="flex gap-2">
-          <button className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">
+        <div className="grid grid-cols-3 gap-2 sm:flex">
+          <button
+            onClick={shareSite}
+            className="rounded-full bg-white/10 px-3 py-2 text-xs font-black sm:px-4 sm:text-sm"
+          >
+            공유
+          </button>
+
+          <button className="rounded-full bg-white/10 px-3 py-2 text-xs font-black sm:px-4 sm:text-sm">
             오늘 {usageCount}/{FREE_LIMIT}회
           </button>
 
           <button
             onClick={() => setShowProModal(true)}
-            className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black"
+            className="rounded-full bg-yellow-400 px-3 py-2 text-xs font-black text-black sm:px-5 sm:text-sm"
           >
             Pro 준비중
           </button>
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[32px] border border-white/10 bg-white/10 p-8 shadow-2xl backdrop-blur">
-          <div className="mb-4 inline-flex rounded-full bg-yellow-400/20 px-4 py-2 text-sm font-black text-yellow-200">
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+        <div className="rounded-[28px] border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur sm:rounded-[32px] sm:p-8">
+          <div className="mb-4 inline-flex rounded-full bg-yellow-400/20 px-4 py-2 text-xs font-black text-yellow-200 sm:text-sm">
             ⚡ 하루 5회 무료 · 이후 광고 보고 계속 생성
           </div>
 
-          <h1 className="mb-5 text-5xl font-black leading-tight tracking-tight md:text-6xl">
+          <h1 className="mb-5 text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-6xl">
             당신의 첫 3초를
             <br />
             <span className="text-yellow-300">조회수로 바꾸세요</span>
           </h1>
 
-          <p className="mb-8 text-white/70">
+          <p className="mb-6 text-sm leading-7 text-white/70 sm:mb-8 sm:text-base">
             주제만 입력하면 AI가 제목, 썸네일 문구, 해시태그, 후킹 분석,
             CapCut/Vrew용 장면 대본까지 한 번에 설계합니다.
           </p>
@@ -225,14 +280,14 @@ export default function HomePage() {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="예: 돈 빨리 모으는 법 / 3분 책요약 / 유머 밈 / 제품 리뷰"
-            className="mb-4 h-36 w-full resize-none rounded-3xl bg-white p-5 text-black outline-none"
+            className="mb-4 h-32 w-full resize-none rounded-3xl bg-white p-5 text-sm text-black outline-none sm:h-36 sm:text-base"
           />
 
-          <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
-              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+              className="rounded-2xl bg-white px-4 py-4 text-sm font-bold text-black outline-none sm:py-3"
             >
               <option>YouTube Shorts</option>
               <option>Instagram Reels</option>
@@ -242,7 +297,7 @@ export default function HomePage() {
             <select
               value={style}
               onChange={(e) => setStyle(e.target.value)}
-              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+              className="rounded-2xl bg-white px-4 py-4 text-sm font-bold text-black outline-none sm:py-3"
             >
               <option>자극형</option>
               <option>정보형</option>
@@ -254,7 +309,7 @@ export default function HomePage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-2xl bg-white px-4 py-3 font-bold text-black outline-none"
+              className="rounded-2xl bg-white px-4 py-4 text-sm font-bold text-black outline-none sm:py-3"
             >
               <option>돈/부업</option>
               <option>연애/심리</option>
@@ -266,17 +321,39 @@ export default function HomePage() {
             </select>
           </div>
 
+          <div className="mb-5 rounded-3xl bg-black/20 p-4">
+            <div className="mb-3 text-sm font-black text-white/80">
+              AI 스타일 프리셋
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              {PRESETS.map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setPreset(item)}
+                  className={
+                    preset === item
+                      ? "shrink-0 rounded-full bg-yellow-400 px-4 py-3 text-xs font-black text-black sm:py-2 sm:text-sm"
+                      : "shrink-0 rounded-full bg-white/10 px-4 py-3 text-xs font-black text-white hover:bg-white/20 sm:py-2 sm:text-sm"
+                  }
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={handleGenerateClick}
             disabled={loading}
-            className="w-full rounded-2xl bg-gradient-to-r from-yellow-300 to-orange-400 py-4 font-black text-black transition hover:scale-[1.01] disabled:opacity-50"
+            className="w-full rounded-2xl bg-gradient-to-r from-yellow-300 to-orange-400 py-5 text-base font-black text-black transition hover:scale-[1.01] disabled:opacity-50 sm:py-4"
           >
             {loading ? "AI가 조회수 구조를 분석 중..." : "🔥 AI 조회수 설계 시작"}
           </button>
         </div>
 
         <aside className="space-y-5">
-          <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
+          <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
             <h2 className="mb-2 text-2xl font-black">🔥 오늘 뜨는 쇼츠</h2>
 
             <p className="mb-4 text-sm text-slate-500">
@@ -294,14 +371,14 @@ export default function HomePage() {
               <button
                 key={item}
                 onClick={() => setTopic(item)}
-                className="mb-3 w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm font-bold hover:bg-slate-200"
+                className="mb-3 w-full rounded-xl bg-slate-100 px-4 py-4 text-left text-sm font-bold hover:bg-slate-200 sm:py-3"
               >
                 {item}
               </button>
             ))}
           </div>
 
-          <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
+          <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-xl font-black">최근 생성 기록</h2>
 
@@ -332,7 +409,11 @@ export default function HomePage() {
                     </div>
 
                     <div className="text-xs font-bold text-slate-500">
-                      {item.category} · {getScoreFromResult(item.result)}점 ·{" "}
+                      {item.category} · {item.preset} ·{" "}
+                      {getScoreFromResult(item.result)}점
+                    </div>
+
+                    <div className="mt-1 text-xs font-bold text-slate-400">
                       {item.createdAt}
                     </div>
                   </button>
@@ -344,33 +425,44 @@ export default function HomePage() {
       </section>
 
       {loading && (
-        <section className="mx-auto max-w-6xl px-6 pb-10">
-          <div className="rounded-[32px] border border-yellow-400/20 bg-yellow-400/10 p-8 shadow-2xl">
+        <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+          <div className="rounded-[28px] border border-yellow-400/20 bg-yellow-400/10 p-5 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-3 flex items-center gap-3">
               <div className="h-4 w-4 animate-pulse rounded-full bg-yellow-300" />
 
-              <h2 className="text-2xl font-black text-yellow-200">
+              <h2 className="text-xl font-black text-yellow-200 sm:text-2xl">
                 AI가 조회수 구조 분석 중...
               </h2>
             </div>
 
             <p className="text-sm font-bold text-yellow-100/80">
-              제목, 썸네일, 해시태그, 후킹, 장면별 대본 구조를 분석하고 있습니다.
+              선택한 프리셋에 맞춰 제목, 썸네일, 해시태그, 장면별 대본을 설계하고 있습니다.
             </p>
           </div>
         </section>
       )}
 
       {result && (
-        <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="mb-5 rounded-[32px] bg-gradient-to-r from-yellow-300 to-orange-400 p-6 text-slate-950 shadow-2xl">
-            <p className="text-sm font-black opacity-70">VIRAL SCORE</p>
-            <h2 className="text-5xl font-black">{parsed.score} / 100</h2>
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 sm:pb-24">
+          <div className="mb-5 rounded-[28px] bg-gradient-to-r from-yellow-300 to-orange-400 p-5 text-slate-950 shadow-2xl sm:rounded-[32px] sm:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-black opacity-70">VIRAL SCORE</p>
+                <h2 className="text-5xl font-black">{parsed.score} / 100</h2>
 
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-6">
-              AI가 후킹, 댓글 유도, 리텐션 가능성을 기준으로 조회수 잠재력을
-              점수화했습니다.
-            </p>
+                <p className="mt-3 max-w-2xl text-sm font-bold leading-6">
+                  AI가 후킹, 댓글 유도, 리텐션 가능성을 기준으로 조회수 잠재력을
+                  점수화했습니다.
+                </p>
+              </div>
+
+              <button
+                onClick={shareResult}
+                className="rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white sm:py-3"
+              >
+                결과 공유
+              </button>
+            </div>
           </div>
 
           <div className="mb-5 grid gap-5 md:grid-cols-3">
@@ -400,10 +492,10 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="mb-5 rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+          <div className="mb-5 rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-3xl font-black">
+                <h2 className="text-2xl font-black sm:text-3xl">
                   🎞 CapCut/Vrew용 장면 대본
                 </h2>
 
@@ -414,31 +506,31 @@ export default function HomePage() {
 
               <button
                 onClick={() => copyText(parsed.sceneScript)}
-                className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black"
+                className="rounded-xl bg-yellow-400 px-4 py-4 text-sm font-black text-black sm:py-2"
               >
                 장면 대본 복사
               </button>
             </div>
 
-            <pre className="whitespace-pre-wrap rounded-2xl bg-slate-100 p-6 text-sm leading-7">
+            <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-100 p-5 text-sm leading-7 sm:p-6">
               {parsed.sceneScript || "장면 대본 결과 없음"}
             </pre>
           </div>
 
-          <div className="rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+          <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-3xl font-black">📄 전체 결과</h2>
+                <h2 className="text-2xl font-black sm:text-3xl">📄 전체 결과</h2>
 
                 <p className="mt-2 text-sm font-bold text-slate-500">
                   전체 결과를 복사해서 촬영 대본, 편집 메모, 콘텐츠 기획안으로 사용할 수 있습니다.
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex">
                 <button
                   onClick={() => copyText(result)}
-                  className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-black text-black"
+                  className="rounded-xl bg-yellow-400 px-4 py-4 text-sm font-black text-black sm:py-2"
                 >
                   전체 복사
                 </button>
@@ -446,14 +538,14 @@ export default function HomePage() {
                 <button
                   onClick={handleGenerateClick}
                   disabled={loading}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
+                  className="rounded-xl bg-slate-900 px-4 py-4 text-sm font-black text-white disabled:opacity-50 sm:py-2"
                 >
                   다시 생성
                 </button>
               </div>
             </div>
 
-            <pre className="whitespace-pre-wrap rounded-2xl bg-slate-100 p-6 text-sm leading-7">
+            <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl bg-slate-100 p-5 text-sm leading-7 sm:p-6">
               {result}
             </pre>
           </div>
@@ -461,8 +553,8 @@ export default function HomePage() {
       )}
 
       {showAdModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-6">
-          <div className="w-full max-w-md rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <h2 className="mb-3 text-2xl font-black">
               무료 생성 횟수를 모두 사용했어요
             </h2>
@@ -496,8 +588,8 @@ export default function HomePage() {
       )}
 
       {showProModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-6">
-          <div className="w-full max-w-md rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl sm:rounded-[32px] sm:p-8">
             <div className="mb-4 inline-flex rounded-full bg-yellow-100 px-4 py-2 text-sm font-black text-yellow-800">
               Pro 준비중
             </div>
@@ -536,7 +628,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm font-bold text-white/40">
+      <footer className="border-t border-white/10 px-4 py-8 text-center text-xs font-bold leading-6 text-white/40 sm:px-6 sm:text-sm">
         ShortsFlow · AI 조회수 설계 도구 · 무료 MVP 테스트 버전
       </footer>
     </main>
@@ -545,8 +637,8 @@ export default function HomePage() {
 
 function ResultCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl">
-      <h3 className="mb-3 text-xl font-black">{title}</h3>
+    <div className="rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
+      <h3 className="mb-3 text-lg font-black sm:text-xl">{title}</h3>
 
       <p className="whitespace-pre-wrap text-sm font-bold leading-7 text-slate-600">
         {text}
@@ -570,12 +662,12 @@ function CopyCard({
     <div
       className={
         highlight
-          ? "rounded-[28px] bg-yellow-50 p-6 text-slate-900 shadow-2xl"
-          : "rounded-[28px] bg-white p-6 text-slate-900 shadow-2xl"
+          ? "rounded-[28px] bg-yellow-50 p-5 text-slate-900 shadow-2xl sm:p-6"
+          : "rounded-[28px] bg-white p-5 text-slate-900 shadow-2xl sm:p-6"
       }
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-xl font-black">{title}</h3>
+        <h3 className="text-lg font-black sm:text-xl">{title}</h3>
 
         <button
           onClick={onCopy}
