@@ -10,37 +10,25 @@ export async function POST(req: Request) {
       style = "자극형",
       category = "돈/부업",
       preset = "기본 조회수 코치",
+      length = "45초",
     } = body;
 
     const presetGuide: Record<string, string> = {
-      "기본 조회수 코치":
-        "조회수 가능성을 높이는 스토리텔링, 후킹, 리텐션 중심으로 작성해라.",
-      "MrBeast 스타일":
-        "큰 보상, 도전, 긴장감, 끝까지 보게 만드는 전개를 사용해라.",
-      "정보형 스타일":
-        "정보를 단순 설명하지 말고 실제 사례와 상황으로 풀어라.",
-      "돈/부업 스타일":
-        "돈 문제를 현실적인 사람 이야기처럼 풀고 저장 욕구를 자극해라.",
-      "밈/유머 스타일":
-        "공감되는 상황과 반전으로 웃기게 풀어라.",
-      "책요약 스타일":
-        "책 내용을 교훈처럼 말하지 말고 실제 삶의 장면으로 연결해라.",
-      "영화리뷰 스타일":
-        "영화 소개가 아니라 친구에게 몰입감 있게 이야기하듯 풀어라.",
+      "기본 조회수 코치": "조회수 가능성을 높이는 스토리텔링, 후킹, 리텐션 중심으로 작성해라.",
+      "MrBeast 스타일": "큰 보상, 도전, 긴장감, 끝까지 보게 만드는 전개를 사용해라.",
+      "정보형 스타일": "정보를 단순 설명하지 말고 실제 사례와 상황으로 풀어라.",
+      "돈/부업 스타일": "돈 문제를 현실적인 사람 이야기처럼 풀고 저장 욕구를 자극해라.",
+      "밈/유머 스타일": "공감되는 상황과 반전으로 웃기게 풀어라.",
+      "책요약 스타일": "책 내용을 교훈처럼 말하지 말고 실제 삶의 장면으로 연결해라.",
+      "영화리뷰 스타일": "영화 소개가 아니라 친구에게 몰입감 있게 이야기하듯 풀어라.",
     };
 
     if (!topic.trim()) {
-      return NextResponse.json(
-        { error: "주제를 입력해주세요." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "주제를 입력해주세요." }, { status: 400 });
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OPENAI_API_KEY가 없습니다." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "OPENAI_API_KEY가 없습니다." }, { status: 500 });
     }
 
     const prompt = `
@@ -55,43 +43,23 @@ export async function POST(req: Request) {
 - 스타일: ${style}
 - 카테고리: ${category}
 - 프리셋: ${preset}
+- 목표 길이: ${length}
 
 프리셋 규칙:
 ${presetGuide[preset] || presetGuide["기본 조회수 코치"]}
 
 대본 작성 핵심:
 - 단순 정보 설명 금지
-- 분석 리포트처럼 쓰지 마라
-- 실제 사람이 겪은 이야기처럼 시작해라
-- 장면이 머릿속에 그려지게 써라
-- 첫 문장은 무조건 궁금해야 한다
-- 중간에는 작은 반전이나 의외성을 넣어라
-- 마지막에는 생각할 거리나 댓글 포인트를 남겨라
-- 바로 녹음 가능한 대사체로 써라
-- 문장은 짧게
-- 말투는 자연스럽게
+- 실제 사람이 겪은 이야기처럼 시작
+- 장면이 머릿속에 그려지게 작성
+- 첫 문장은 궁금해야 함
+- 중간에 작은 반전 또는 의외성 추가
+- 마지막에는 댓글 포인트 남기기
+- 바로 녹음 가능한 대사체
 - 느낌표, 물음표 남발 금지
-- "충격", "소름", "인생 바뀜", "무조건" 같은 싸구려 표현 금지
-- 유튜브 쇼츠에서 실제 크리에이터가 말하는 느낌으로 작성해라
-
-좋은 대본 구조:
-1. 실제 상황/사례로 시작
-2. 사람들이 공감할 만한 문제 제기
-3. 왜 그런 일이 생기는지 설명
-4. 중간 반전 또는 의외의 포인트
-5. 해결 또는 깨달음
-6. 댓글을 부르는 마무리
-
-좋은 대사 예시:
-"내 친구 중에 월급날만 되면 돈이 들어오는데, 일주일만 지나면 항상 돈이 없다는 애가 있었어."
-
-"처음엔 그냥 소비가 심한 줄 알았거든."
-
-"근데 카드 내역을 보니까 진짜 문제는 다른 데 있었어."
-
-"그 친구는 돈을 많이 쓰는 게 아니라, 자기가 어디에 쓰는지를 전혀 모르고 있었어."
-
-이런 식으로 실제 이야기처럼 써라.
+- 과장된 표현 금지
+- 대본이 가장 중요함
+- 목표 길이에 맞게 대사량 조절
 
 출력 형식은 반드시 유지해라.
 
@@ -120,6 +88,7 @@ ${presetGuide[preset] || presetGuide["기본 조회수 코치"]}
 반드시 시간대별로 작성해라.
 각 구간마다 대사와 장면을 모두 써라.
 대사는 실제 영상에 바로 넣을 수 있어야 한다.
+목표 길이 ${length}에 맞춰 작성해라.
 
 형식:
 
@@ -143,53 +112,46 @@ ${presetGuide[preset] || presetGuide["기본 조회수 코치"]}
 대사:
 장면:
 
-[40~55초]
+[40초~마무리]
 대사:
 장면:
 
 중요:
-- 대본이 가장 중요하다
 - 대본을 짧게 대충 쓰지 마라
 - 각 구간의 대사는 실제로 말할 수 있게 디테일하게 써라
 - 장면 설명은 편집자가 바로 이해할 수 있게 써라
-- 정보보다 흐름과 몰입감이 중요하다
 - 사람 이야기처럼 써라
 `;
 
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "너는 실제 조회수 높은 쇼츠를 쓰는 스토리텔링 작가다. 분석보다 대본의 몰입감과 실제 대사 퀄리티를 최우선으로 한다.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          temperature: 0.78,
-          max_tokens: 3200,
-        }),
-      }
-    );
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "너는 실제 조회수 높은 쇼츠를 쓰는 스토리텔링 작가다. 분석보다 대본의 몰입감과 실제 대사 퀄리티를 최우선으로 한다.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.78,
+        max_tokens: 3400,
+      }),
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        {
-          error: data.error?.message || "OpenAI API 오류",
-        },
+        { error: data.error?.message || "OpenAI API 오류" },
         { status: 500 }
       );
     }
@@ -201,9 +163,7 @@ ${presetGuide[preset] || presetGuide["기본 조회수 코치"]}
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "서버 오류가 발생했습니다.",
+          error instanceof Error ? error.message : "서버 오류가 발생했습니다.",
       },
       { status: 500 }
     );
