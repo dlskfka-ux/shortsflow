@@ -46,6 +46,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [showAdModal, setShowAdModal] = useState(false);
+  const [showProModal, setShowProModal] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -193,7 +194,10 @@ export default function HomePage() {
             오늘 {usageCount}/{FREE_LIMIT}회
           </button>
 
-          <button className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black">
+          <button
+            onClick={() => setShowProModal(true)}
+            className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black"
+          >
             Pro 준비중
           </button>
         </div>
@@ -454,6 +458,47 @@ export default function HomePage() {
 
             <button
               onClick={() => setShowAdModal(false)}
+              className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showProModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-6">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+            <div className="mb-4 inline-flex rounded-full bg-yellow-100 px-4 py-2 text-sm font-black text-yellow-800">
+              Pro 준비중
+            </div>
+
+            <h2 className="mb-3 text-3xl font-black">
+              광고 없이 무제한으로 만들기
+            </h2>
+
+            <p className="mb-6 text-sm font-bold leading-6 text-slate-600">
+              ShortsFlow Pro는 계속 쇼츠를 만드는 크리에이터를 위한 기능입니다.
+              정식 출시 전까지는 무료 MVP로 먼저 테스트할 수 있습니다.
+            </p>
+
+            <div className="mb-6 space-y-3 rounded-2xl bg-slate-100 p-5 text-sm font-bold text-slate-700">
+              <div>✅ 광고 없이 무제한 생성</div>
+              <div>✅ 고급 바이럴 점수 분석</div>
+              <div>✅ 생성 기록 저장 강화</div>
+              <div>✅ 썸네일 문구 / 제목 A/B 테스트</div>
+              <div>✅ 해시태그 / 대본 Export 기능</div>
+            </div>
+
+            <button
+              onClick={() => setShowProModal(false)}
+              className="mb-3 w-full rounded-2xl bg-yellow-400 py-4 font-black text-black"
+            >
+              알겠어요
+            </button>
+
+            <button
+              onClick={() => setShowProModal(false)}
               className="w-full rounded-2xl bg-slate-900 py-4 font-black text-white"
             >
               닫기
